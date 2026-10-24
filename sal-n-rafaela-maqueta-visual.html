@@ -583,7 +583,7 @@
           Registrar movimiento
         </button>
         <div class="side-spacer"></div>
-        <div class="side-note"><strong>Maqueta visual.</strong> Los nombres y montos son de ejemplo, para ver cómo se vería la app antes de hacerla funcional.</div>
+        <div class="side-note"><strong>Maqueta visual.</strong> La app arranca en cero, sin ningún registro; lo único cargado es la lista de servicios con los precios del salón.</div>
       </aside>
 
       <!-- ============ CONTENIDO ============ -->
@@ -930,7 +930,10 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    /* =================== DATOS DE EJEMPLO (maqueta) =================== */
+    /* ============ CATÁLOGO DEL SALÓN (lo único precargado) ============ */
+    /* La app arranca TOTALMENTE LIMPIA: sin clientas, sin citas y sin
+       movimientos. Lo único cargado es el catálogo de Servicios con los
+       precios dictados, que es configuración del salón, no registros. */
     /* ÚNICOS procesos del salón: los que Wilfredo dictó. El lavado es la base
        (incluye su secado normal); el secado a blower y el pasado de plancha
        son ADICIONALES que se suman al lavado y se pueden llevar los dos a la
@@ -977,7 +980,7 @@
     }
     /* ===== Secciones que se resumen (vista móvil) =====
        Al completar un paso, su sección se colapsa a una línea
-       «Clienta: Carmen Rodríguez» con botón «Cambiar» para reabrirla.
+       «Clienta: …» con botón «Cambiar» para reabrirla.
        En ordenador las secciones se ven siempre completas (CSS). */
     const isMobile = () => window.matchMedia('(max-width: 899px)').matches;
     function collapseSec(sec, summary){
@@ -1040,32 +1043,7 @@
     /* Rafaela puede cambiar cualquier precio tocándolo en Servicios,
        y agregar procesos nuevos con el botón «+ Agregar». */
 
-    const CLIENTS = [
-      {id:'c1', name:'Carmen Rodríguez', phone:'809-555-0142', last:'Hoy', visits:14, total:12600, tone:'rose',
-       next:'Hoy · 9:00 a. m.',
-       notes:'Clienta de siempre: se le hace descuento. Prefiere citas temprano en la mañana. Casi siempre pide el secado a blower.',
-       history:[['Hoy','Lavado pelo largo + Secado a blower',800],['18 sept','Lavado pelo medio + Pasado de plancha',750],['28 ago','Lavado pelo corto',500],['30 jul','Ampolla de células madre',300]]},
-      {id:'c2', name:'Yolanda Pérez', phone:'829-555-0187', last:'Hoy', visits:9, total:6850, tone:'gold',
-       next:'Sáb 24 · 10:00 a. m.',
-       notes:'Le gusta el café con poca azúcar. Casi siempre pide blower.',
-       history:[['Hoy','Lavado pelo medio + Secado a blower',700],['2 oct','Lavado pelo corto + Pasado de plancha',650],['12 sept','Tratamiento estándar',150]]},
-      {id:'c3', name:'María Fernández', phone:'809-555-0119', last:'Hoy', visits:21, total:15800, tone:'green',
-       next:'Hoy · 2:00 p. m.',
-       notes:'Clienta desde 2021. Paga casi siempre por transferencia.',
-       history:[['Hoy','Lavado pelo corto',500],['25 sept','Lavado pelo largo + Pasado de plancha',850],['4 sept','Ampolla hidratante de leche',250]]},
-      {id:'c4', name:'Luisa Martínez', phone:'849-555-0163', last:'15 oct', visits:6, total:4950, tone:'rose',
-       next:'Hoy · 4:00 p. m.',
-       notes:'Está dejando crecer el cabello para su boda en diciembre.',
-       history:[['15 oct','Tratamiento básico',100],['26 sept','Lavado pelo medio',600],['5 sept','Lavado pelo corto + Secado a blower',600]]},
-      {id:'c5', name:'Ana Beltré', phone:'809-555-0128', last:'8 oct', visits:11, total:7900, tone:'gold',
-       next:'Vie 23 · 11:00 a. m.',
-       notes:'Trae a su hija los sábados.',
-       history:[['8 oct','Lavado pelo corto',500],['19 sept','Ampolla anti caída',250],['29 ago','Lavado pelo medio + Secado a blower',700]]},
-      {id:'c6', name:'Rosa Jiménez', phone:'829-555-0151', last:'Ayer', visits:4, total:2350, tone:'green',
-       next:'Sin cita próxima',
-       notes:'Llegó por recomendación de Carmen.',
-       history:[['Ayer','Lavado pelo largo',700],['1 oct','Lavado pelo medio + Pasado de plancha',750]]}
-    ];
+    const CLIENTS = [];
     const clientById = id => CLIENTS.find(c=>c.id===id);
 
     /* Agregar una clienta nueva: queda de primera en la lista de Clientes
@@ -1074,7 +1052,7 @@
        tanto el botón de la pantalla de Clientes como el «+» dentro del cobro. */
     function addClient(name, phone, notes){
       const tones = ['rose','gold','green'];
-      const nc = {id:'c' + Date.now(), name, phone: phone || 'Sin teléfono', last:'Hoy', visits:0, total:0,
+      const nc = {id:'c' + Date.now(), name, phone: phone || 'Sin teléfono', last:'Nunca', visits:0, total:0,
         tone: tones[CLIENTS.length % tones.length], next:'Sin cita próxima',
         notes: notes || 'Clienta nueva, agregada por Rafaela.', history:[]};
       CLIENTS.unshift(nc);
@@ -1084,37 +1062,7 @@
     }
 
     /* grupo: hoy | semana | mes (para los filtros) */
-    let MOVEMENTS = [
-      {tipo:'ingreso', concepto:'Lavado pelo largo + Secado a blower', detalle:'Carmen Rodríguez', metodo:'Transferencia', monto:800, grupo:'hoy', fecha:'Hoy'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio + Secado a blower', detalle:'Yolanda Pérez', metodo:'Efectivo', monto:700, grupo:'hoy', fecha:'Hoy'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto', detalle:'María Fernández', metodo:'Tarjeta', monto:500, grupo:'hoy', fecha:'Hoy'},
-      {tipo:'gasto', concepto:'Compra de productos para el salón', detalle:'Productos', metodo:'Tarjeta', monto:900, grupo:'hoy', fecha:'Hoy'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo + Secado a blower', detalle:'Carmen Rodríguez', metodo:'Tarjeta', monto:800, grupo:'semana', fecha:'Ayer'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo', detalle:'Rosa Jiménez', metodo:'Efectivo', monto:700, grupo:'semana', fecha:'Ayer'},
-      {tipo:'gasto', concepto:'Recibo de luz', detalle:'Servicios del local', metodo:'Transferencia', monto:1200, grupo:'semana', fecha:'Ayer'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto + Pasado de plancha', detalle:'Luisa Martínez', metodo:'Efectivo', monto:650, grupo:'semana', fecha:'Mar 20'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio', detalle:'Ana Beltré', metodo:'Efectivo', monto:600, grupo:'semana', fecha:'Lun 19'},
-      {tipo:'gasto', concepto:'Pago a la asistente (semana)', detalle:'Sueldos', metodo:'Transferencia', monto:3000, grupo:'semana', fecha:'Lun 19'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo + Pasado de plancha', detalle:'Luisa Martínez', metodo:'Transferencia', monto:850, grupo:'mes', fecha:'15 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto', detalle:'Carmen Rodríguez', metodo:'Efectivo', monto:500, grupo:'mes', fecha:'15 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio', detalle:'Ana Beltré', metodo:'Efectivo', monto:600, grupo:'mes', fecha:'14 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio + Secado a blower', detalle:'Yolanda Pérez', metodo:'Tarjeta', monto:700, grupo:'mes', fecha:'14 oct'},
-      {tipo:'ingreso', concepto:'Ampolla de células madre', detalle:'Rosa Jiménez', metodo:'Tarjeta', monto:300, grupo:'mes', fecha:'12 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo', detalle:'María Fernández', metodo:'Transferencia', monto:700, grupo:'mes', fecha:'12 oct'},
-      {tipo:'ingreso', concepto:'Tratamiento básico', detalle:'Yolanda Pérez', metodo:'Efectivo', monto:100, grupo:'mes', fecha:'10 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto + Secado a blower', detalle:'Luisa Martínez', metodo:'Efectivo', monto:600, grupo:'mes', fecha:'10 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto + Pasado de plancha', detalle:'Carmen Rodríguez', metodo:'Transferencia', monto:650, grupo:'mes', fecha:'9 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo + Secado a blower', detalle:'Ana Beltré', metodo:'Tarjeta', monto:800, grupo:'mes', fecha:'9 oct'},
-      {tipo:'ingreso', concepto:'Tratamiento estándar', detalle:'María Fernández', metodo:'Tarjeta', monto:150, grupo:'mes', fecha:'7 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio + Pasado de plancha', detalle:'Rosa Jiménez', metodo:'Efectivo', monto:750, grupo:'mes', fecha:'7 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo largo + Secado a blower', detalle:'Luisa Martínez', metodo:'Efectivo', monto:800, grupo:'mes', fecha:'6 oct'},
-      {tipo:'ingreso', concepto:'Ampolla anti caída', detalle:'Ana Beltré', metodo:'Efectivo', monto:250, grupo:'mes', fecha:'6 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo medio', detalle:'Carmen Rodríguez', metodo:'Transferencia', monto:600, grupo:'mes', fecha:'5 oct'},
-      {tipo:'ingreso', concepto:'Lavado pelo corto', detalle:'Yolanda Pérez', metodo:'Efectivo', monto:500, grupo:'mes', fecha:'3 oct'},
-      {tipo:'ingreso', concepto:'Ampolla hidratante de leche', detalle:'María Fernández', metodo:'Tarjeta', monto:250, grupo:'mes', fecha:'3 oct'},
-      {tipo:'gasto', concepto:'Alquiler del local', detalle:'Alquiler', metodo:'Transferencia', monto:6000, grupo:'mes', fecha:'5 oct'},
-      {tipo:'gasto', concepto:'Productos para el salón (mayorista)', detalle:'Productos', metodo:'Tarjeta', monto:1800, grupo:'mes', fecha:'3 oct'}
-    ];
+    let MOVEMENTS = [];
 
     const WEEK = [
       {dia:'Lun', num:19, label:'Lun 19'},
@@ -1126,26 +1074,10 @@
       {dia:'Dom', num:25, label:'Dom 25'}
     ];
     /* citas por día (índice en WEEK): solo clienta, hora y estado */
-    let APPOINTMENTS = {
-      1:[{hora:'10:00 a. m.', client:'c5', estado:'Completada'}],
-      2:[{hora:'9:30 a. m.', client:'c6', estado:'Completada'},
-         {hora:'1:00 p. m.', client:'c2', estado:'Cancelada'}],
-      3:[{hora:'9:00 a. m.', client:'c1', estado:'Completada'},
-         {hora:'11:30 a. m.', client:'c2', estado:'Completada'},
-         {hora:'1:00 p. m.', client:'c3', estado:'Completada'},
-         {hora:'2:00 p. m.', client:'c3', estado:'Confirmada'},
-         {hora:'4:00 p. m.', client:'c4', estado:'Confirmada'},
-         {hora:'5:30 p. m.', client:'c6', estado:'Pendiente'}],
-      4:[{hora:'11:00 a. m.', client:'c5', estado:'Confirmada'},
-         {hora:'3:00 p. m.', client:'c4', estado:'Pendiente'}],
-      5:[{hora:'10:00 a. m.', client:'c2', estado:'Confirmada'},
-         {hora:'1:00 p. m.', client:'c1', estado:'Confirmada'},
-         {hora:'4:30 p. m.', client:'c6', estado:'Pendiente'}],
-      6:[]
-    };
-    const CHART = [ /* ingresos por día de la semana */
-      {d:'Lun', v:600},{d:'Mar', v:650},{d:'Mié', v:1500},
-      {d:'Jue', v:2000, today:true},{d:'Vie', v:0},{d:'Sáb', v:0},{d:'Dom', v:0}
+    let APPOINTMENTS = {};
+    const CHART = [ /* ingresos por día de la semana: arranca todo en cero */
+      {d:'Lun', v:0},{d:'Mar', v:0},{d:'Mié', v:0},
+      {d:'Jue', v:0, today:true},{d:'Vie', v:0},{d:'Sáb', v:0},{d:'Dom', v:0}
     ];
     const CATS = ['Productos','Alquiler','Sueldos','Servicios del local','Otros'];
     const METHODS = ['Efectivo','Tarjeta','Transferencia'];
@@ -1219,11 +1151,13 @@
     function renderInicio(){
       const t = totals();
       const citasHoy = (APPOINTMENTS[3]||[]).filter(a=>a.estado!=='Cancelada').length;
-      $('#heroLine').textContent = `Así va tu salón hoy: ${citasHoy} citas en agenda y ${fmt(t.ingHoy)} cobrados en lo que va del día.`;
+      $('#heroLine').textContent = (citasHoy === 0 && t.ingHoy === 0)
+        ? 'Tu salón arranca en cero: todavía no hay citas ni cobros registrados hoy.'
+        : `Así va tu salón hoy: ${citasHoy} citas en agenda y ${fmt(t.ingHoy)} cobrados en lo que va del día.`;
       const cards = [
-        {lbl:'Ingresos de hoy', val:t.ingHoy, dot:'var(--green)', delta:'<b class="up">3 cobros</b> registrados hoy'},
-        {lbl:'Ingresos del mes', val:t.ingMes, dot:'var(--rose)', delta:'Octubre · <b class="up">+12%</b> vs. septiembre'},
-        {lbl:'Gastos del mes', val:t.gasMes, dot:'var(--gold)', delta:'Incluye alquiler y productos'},
+        {lbl:'Ingresos de hoy', val:t.ingHoy, dot:'var(--green)', delta: t.ingHoy > 0 ? 'Lo cobrado hasta ahora' : 'Todavía no hay cobros hoy'},
+        {lbl:'Ingresos del mes', val:t.ingMes, dot:'var(--rose)', delta:'Todo lo que entró en octubre'},
+        {lbl:'Gastos del mes', val:t.gasMes, dot:'var(--gold)', delta:'Todo lo que salió en octubre'},
         {lbl:'Ganancia neta', val:t.neta, dot:'#fff', delta:'Lo que de verdad quedó en el mes', hero:true}
       ];
       $('#statCards').innerHTML = cards.map(c => `
@@ -1233,24 +1167,35 @@
           <div class="delta">${c.delta}</div>
         </div>`).join('');
 
-      const max = Math.max(...CHART.map(c=>c.v));
-      $('#weekChart').innerHTML = CHART.map(c => `
-        <div class="bar-col ${c.today?'today':''}">
-          <div class="bar ${c.today?'':'dim'}" style="height:${c.v? Math.max(12, c.v/max*100) : 4}%">
-            ${c.v? `<span class="bv">${fmtShort(c.v)}</span>`:''}
-          </div>
-          <div class="bl">${c.today?'Hoy':c.d}</div>
-        </div>`).join('');
+      const chartTotal = CHART.reduce((a,c)=>a+c.v,0);
+      if(chartTotal === 0){
+        $('#weekChart').innerHTML = `<div class="empty" style="width:100%;align-self:center"><div class="big">Sin cobros esta semana</div>Cuando registres cobros, aquí verás cuánto entró cada día.</div>`;
+      } else {
+        const max = Math.max(...CHART.map(c=>c.v));
+        $('#weekChart').innerHTML = CHART.map(c => `
+          <div class="bar-col ${c.today?'today':''}">
+            <div class="bar ${c.today?'':'dim'}" style="height:${c.v? Math.max(12, c.v/max*100) : 4}%">
+              ${c.v? `<span class="bv">${fmtShort(c.v)}</span>`:''}
+            </div>
+            <div class="bl">${c.today?'Hoy':c.d}</div>
+          </div>`).join('');
+      }
 
       const list = (APPOINTMENTS[3]||[]).filter(a=>a.estado!=='Cancelada');
-      $('#todayCount').textContent = list.length + ' citas';
-      $('#todayList').innerHTML = list.map(a => {
+      $('#todayCount').textContent = list.length + (list.length === 1 ? ' cita' : ' citas');
+      if(!list.length){
+        $('#todayList').innerHTML = `<div class="empty"><div class="big">Todavía no hay citas hoy</div>Cuando agendes una cita para hoy, aparecerá aquí.
+          <div style="margin-top:14px"><button class="btn btn-rose" id="todayNewBtn">+ Nueva cita</button></div></div>`;
+        $('#todayNewBtn').addEventListener('click', ()=>openCita(null));
+      } else {
+        $('#todayList').innerHTML = list.map(a => {
         const c = clientById(a.client);
         return `<div class="row-item hoy-row">
           <div class="time-badge"><div class="h num">${a.hora.replace(' a. m.','').replace(' p. m.','')}</div><div class="d">${a.hora.includes('p. m.')?'p. m.':'a. m.'}</div></div>
           <div class="row-main"><div class="hoy-top"><span class="t">${esc(c.name)}</span>${estadoChip(a.estado)}</div></div>
         </div>`;
       }).join('');
+      }
     }
     function estadoChip(e){
       if(e==='Completada') return '<span class="chip green">Completada</span>';
@@ -1285,25 +1230,33 @@
 
       const body = $('#finBody');
       if(finTab === 'balance'){
+        if(!MOVEMENTS.length){
+          body.innerHTML = `<div class="empty"><div class="big">Todavía no hay movimientos</div>Cuando registres cobros y gastos, aquí verás en qué se va el dinero y cuánto te queda de ganancia.</div>`;
+          return;
+        }
         const gastos = MOVEMENTS.filter(m=>m.tipo==='gasto');
         const byCat = {};
         gastos.forEach(g => { const cat = CATS.includes(g.detalle) ? g.detalle : 'Otros'; byCat[cat]=(byCat[cat]||0)+g.monto; });
-        const max = Math.max(...Object.values(byCat));
+        const max = gastos.length ? Math.max(...Object.values(byCat)) : 0;
         const pct = t.ingMes ? Math.round(t.neta/t.ingMes*100) : 0;
+        const topGasto = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
         body.innerHTML = `
           <div class="grid-2">
             <div class="panel">
               <h3>¿En qué se va el dinero?</h3>
               <div class="p-sub">Gastos de octubre por categoría</div>
-              ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+              ${gastos.length ? Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
                 <div class="catbar"><div class="cb-top"><span class="n">${esc(k)}</span><span class="num">${fmt(v)}</span></div>
-                <div class="track"><div class="fill" style="width:${Math.round(v/max*100)}%"></div></div></div>`).join('')}
+                <div class="track"><div class="fill" style="width:${Math.round(v/max*100)}%"></div></div></div>`).join('')
+                : '<p style="font-size:15.5px;margin:6px 0 2px;color:var(--muted)">Todavía no hay gastos registrados.</p>'}
             </div>
             <div class="panel">
               <h3>El mes en una frase</h3>
               <div class="p-sub">Resumen de octubre</div>
-              <p style="font-size:16.5px;margin:6px 0 12px">De cada RD$ 100 que entraron, <strong>se quedaron ${pct}</strong> como ganancia. El gasto más grande es el alquiler del local (${fmt(6000)}), seguido de los sueldos y los productos.</p>
-              <p style="font-size:16.5px;margin:0">El sábado es el día fuerte de citas: conviene abrir la agenda de los sábados con más anticipación.</p>
+              ${t.ingMes > 0
+                ? `<p style="font-size:16.5px;margin:6px 0 12px">De cada RD$ 100 que entraron, <strong>se quedaron ${pct}</strong> como ganancia.</p>`
+                : '<p style="font-size:16.5px;margin:6px 0 12px">Todavía no hay ingresos registrados este mes.</p>'}
+              ${topGasto ? `<p style="font-size:16.5px;margin:0">El gasto más grande hasta ahora es ${esc(topGasto[0].toLowerCase())}: ${fmt(topGasto[1])}.</p>` : ''}
             </div>
           </div>
           <div class="day-label">Todos los movimientos del mes</div>
@@ -1314,7 +1267,10 @@
       let list = MOVEMENTS.filter(m => m.tipo===tipo && inPeriod(m));
       if(finQuery) list = list.filter(m => (m.concepto+' '+m.detalle+' '+m.metodo).toLowerCase().includes(finQuery));
       if(!list.length){
-        body.innerHTML = `<div class="empty"><div class="big">Sin movimientos</div>No hay ${finTab} que coincidan con ese filtro.</div>`;
+        const anyTipo = MOVEMENTS.some(m=>m.tipo===tipo);
+        body.innerHTML = anyTipo
+          ? `<div class="empty"><div class="big">Sin resultados</div>Ningún movimiento coincide con ese filtro.</div>`
+          : `<div class="empty"><div class="big">Todavía no hay ${finTab}</div>Nada registrado todavía. Toca «+ Registrar» para anotar el primero.</div>`;
         return;
       }
       const groups = {};
@@ -1337,7 +1293,7 @@
       const list = (APPOINTMENTS[agendaDay]||[]);
       const barColor = {rose:'var(--rose)', gold:'var(--gold)', green:'var(--green)'};
       if(!list.length){
-        $('#agendaList').innerHTML = `<div class="empty"><div class="big">Día libre</div>No hay citas para el ${WEEK[agendaDay].label.toLowerCase()}. Toca «Nueva cita» para agendar la primera.</div>`;
+        $('#agendaList').innerHTML = `<div class="empty"><div class="big">No hay citas este día</div>El ${WEEK[agendaDay].label.toLowerCase()} está libre. Toca «Nueva cita» para agendar la primera.</div>`;
         return;
       }
       $('#agendaList').innerHTML =
@@ -1363,7 +1319,9 @@
           <div class="s">Última visita: ${esc(c.last)} · ${c.visits} visitas</div></div>
           <div class="tot"><div class="v num">${fmt(c.total)}</div><div class="l">en total</div></div>
         </button>`).join('')
-        : `<div class="empty" style="grid-column:1/-1"><div class="big">Sin resultados</div>Ninguna clienta coincide con esa búsqueda.</div>`;
+        : (CLIENTS.length === 0
+          ? `<div class="empty" style="grid-column:1/-1"><div class="big">Todavía no tienes clientas registradas</div>Cuando agregues la primera con el botón «+ Agregar clienta», aparecerá aquí.</div>`
+          : `<div class="empty" style="grid-column:1/-1"><div class="big">Sin resultados</div>Ninguna clienta coincide con esa búsqueda.</div>`);
       $$('#clientGrid [data-client]').forEach(b => b.addEventListener('click', ()=>openFicha(b.dataset.client)));
     }
     function openFicha(id){
@@ -1383,7 +1341,9 @@
         <div class="step-lbl">Notas de Rafaela</div>
         <div class="note-box">${esc(c.notes)}</div>
         <div class="step-lbl">Historial de arreglos</div>
-        ${c.history.map(h => `<div class="row-item"><div class="row-main"><div class="t">${esc(h[1])}</div><div class="s">${esc(h[0])}</div></div><div class="row-end"><span class="amt num in">+ ${fmt(h[2])}</span></div></div>`).join('')}
+        ${c.history.length
+          ? c.history.map(h => `<div class="row-item"><div class="row-main"><div class="t">${esc(h[1])}</div><div class="s">${esc(h[0])}</div></div><div class="row-end"><span class="amt num in">+ ${fmt(h[2])}</span></div></div>`).join('')
+          : '<p style="margin:0;font-size:15px;color:var(--muted)">Todavía no tiene arreglos registrados.</p>'}
         <button class="btn btn-rose confirm" id="fichaAgendar" style="width:100%;justify-content:center;margin-top:20px;padding:13px">Agendar nueva cita</button>`;
       openOverlay('fichaOverlay');
       $('#fichaAgendar').addEventListener('click', ()=>{
@@ -1489,7 +1449,9 @@
       const list = CLIENTS.filter(c => c.name.toLowerCase().includes(regClientQuery));
       el.innerHTML = list.length
         ? list.map(c => `<button class="pick" data-v="${c.id}">${esc(c.name)}</button>`).join('')
-        : '<div class="mini-lbl" style="grid-column:1/-1;margin:2px 0">Ninguna clienta con ese nombre. Agrégala con el botón de arriba.</div>';
+        : (CLIENTS.length === 0
+          ? '<div class="mini-lbl" style="grid-column:1/-1;margin:2px 0">Todavía no hay clientas. Agrégala con el botón de arriba.</div>'
+          : '<div class="mini-lbl" style="grid-column:1/-1;margin:2px 0">Ninguna clienta con ese nombre. Agrégala con el botón de arriba.</div>');
       el.querySelectorAll('.pick[data-v]').forEach(b => b.addEventListener('click', ()=>{
         el.querySelectorAll('.pick').forEach(x=>x.classList.remove('sel'));
         b.classList.add('sel');
@@ -1708,6 +1670,7 @@
       cg($('#citaClients'), CLIENTS.map(c=>({v:c.id, label:esc(c.name)})), 'client', it => {
         if(it) collapseSec($('#citaSecClient'), 'Clienta: ' + it.label);
       });
+      if(!CLIENTS.length) $('#citaClients').innerHTML = '<div class="mini-lbl" style="grid-column:1/-1;margin:2px 0">Todavía no hay clientas. Toca «+ Agregar clienta» para registrar la primera.</div>';
       cg($('#citaDays'), WEEK.slice(3).map((d,i)=>({v:String(i+3), label:(d.today?'Hoy · ':'') + d.dia + ' ' + d.num})), 'day', it => {
         if(it) collapseSec($('#citaSecDay'), 'Día: ' + it.label);
       });
