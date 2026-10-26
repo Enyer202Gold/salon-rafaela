@@ -1059,6 +1059,7 @@
         tone: tones[CLIENTS.length % tones.length], next:'Sin cita próxima',
         notes: notes || 'Clienta nueva, agregada por Rafaela.', history:[]};
       CLIENTS.unshift(nc);
+      saveState();
       renderClientes($('#clientSearch').value.toLowerCase());
       buildRegClients(); buildCita();
       return nc;
@@ -1116,6 +1117,66 @@
     const CATS = ['Productos','Alquiler','Sueldos','Servicios del local','Otros'];
     const METHODS = ['Efectivo','Tarjeta','Transferencia'];
     const HOURS = ['9:00 a. m.','10:00 a. m.','11:00 a. m.','12:00 p. m.','2:00 p. m.','3:00 p. m.','4:00 p. m.','5:00 p. m.'];
+
+    /* ============ GUARDADO AUTOMÁTICO EN EL TELÉFONO ============
+       Todo el estado (catálogo de servicios con sus precios, clientas,
+       citas y movimientos) se guarda en el navegador del propio teléfono
+       (localStorage) cada vez que algo cambia, sin botones ni pasos extra.
+       Al abrir la página se recupera tal cual quedó. Si el navegador no
+       permite guardar (modo privado), la app sigue funcionando en la
+       sesión, como antes. El saludo y las fechas NO se guardan: se siguen
+       calculando del reloj real en cada apertura. */
+    const STORE_KEY = 'salon-rafaela-v1';
+    let storeOK = true;
+    function saveState(){
+      if(!storeOK) return;
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          v:1, services:SERVICES, clients:CLIENTS, movements:MOVEMENTS, appointments:APPOINTMENTS
+        }));
+      } catch(e){ storeOK = false; }
+    }
+    function fechaTxtDeClave(dk){
+      const p = String(dk).split('-').map(Number);
+      if(p.length !== 3 || p.some(isNaN)) return '';
+      const d = new Date(p[0], p[1] - 1, p[2]);
+      return DIAS_LARGO[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    }
+    /* Al recuperar registros de días anteriores, «hoy» deja de ser hoy:
+       se recalcula el grupo (hoy / semana / mes), la etiqueta de fecha,
+       la última visita de cada clienta y el gráfico de la semana actual. */
+    function recalibrarGuardado(){
+      MOVEMENTS.forEach(m => {
+        if(!m.dk) return;
+        if(m.dk === HOY_KEY){ m.grupo = 'hoy'; m.fecha = 'Hoy'; }
+        else if(WEEK.some(w => w.key === m.dk)){ m.grupo = 'semana'; m.fecha = fechaTxtDeClave(m.dk); }
+        else { m.grupo = 'mes'; m.fecha = fechaTxtDeClave(m.dk); }
+      });
+      CHART.forEach(c => { c.v = 0; });
+      MOVEMENTS.filter(m => m.tipo === 'ingreso').forEach(m => {
+        const i = WEEK.findIndex(w => w.key === m.dk);
+        if(i >= 0) CHART[i].v += m.monto;
+      });
+      CLIENTS.forEach(c => {
+        if(c.lastDk && c.lastDk !== HOY_KEY) c.last = fechaTxtDeClave(c.lastDk);
+      });
+    }
+    function loadState(){
+      let raw = null;
+      try { raw = localStorage.getItem(STORE_KEY); }
+      catch(e){ storeOK = false; return; }
+      if(!raw){ saveState(); return; } /* primera vez: queda guardado el catálogo inicial */
+      try {
+        const d = JSON.parse(raw);
+        if(!d || typeof d !== 'object') return;
+        if(Array.isArray(d.services) && d.services.length) SERVICES.splice(0, SERVICES.length, ...d.services);
+        if(Array.isArray(d.clients)) CLIENTS.splice(0, CLIENTS.length, ...d.clients);
+        if(Array.isArray(d.movements)) MOVEMENTS = d.movements;
+        if(d.appointments && typeof d.appointments === 'object') APPOINTMENTS = d.appointments;
+        recalibrarGuardado();
+      } catch(e){ /* datos guardados dañados: se arranca limpio, como la primera vez */ }
+    }
+    loadState();
 
     /* =================== ICONOS =================== */
     const I = {
@@ -1453,6 +1514,7 @@
       if(!name) return;
       if(svcForm.mode === 'new-svc') SERVICES.push({id:'svc' + Date.now(), name, price, cat:'otros', tone:'rose', desc:'Agregado por Rafaela'});
       else if(svcForm.mode === 'edit-svc'){ const s = svcById(svcForm.id); s.name = name; s.price = price; }
+      saveState();
       closeOverlay('svcOverlay');
       renderServicios(); buildReg(); buildCita();
       toast('Guardado: ' + name + ' · ' + fmt(price));
@@ -1670,19 +1732,20 @@
         const notas = [];
         if(cu.desc > 0) notas.push('precio ' + fmt(cu.sub) + ' − descuento ' + fmt(cu.desc));
         if(cu.extra > 0) notas.push('extra: ' + (($('#regExtraName').value || '').trim() || 'Extra') + ' ' + fmt(cu.extra));
-        MOVEMENTS.unshift({tipo:'ingreso', concepto, detalle:c.name, metodo:reg.method, monto:cu.total, grupo:'hoy', fecha:'Hoy', nota:notas.join(' · ')});
+        MOVEMENTS.unshift({tipo:'ingreso', concepto, detalle:c.name, metodo:reg.method, monto:cu.total, grupo:'hoy', fecha:'Hoy', dk:HOY_KEY, nota:notas.join(' · ')});
         const ch = CHART.find(x=>x.today); if(ch) ch.v += cu.total;
-        c.total += cu.total; c.visits += 1; c.last = 'Hoy';
+        c.total += cu.total; c.visits += 1; c.last = 'Hoy'; c.lastDk = HOY_KEY;
         $('#regDoneTitle').textContent = '¡Cobro registrado!';
         $('#regDoneText').textContent = `${nombreSvc} a ${c.name} · total cobrado ${fmt(cu.total)}${cu.desc > 0 ? ' (precio ' + fmt(cu.sub) + ' − descuento ' + fmt(cu.desc) + ')' : ''} en ${reg.method.toLowerCase()}. Ya aparece en Finanzas y en el resumen de hoy.`;
       } else {
         const det = ($('#regGastoDetalle').value||'').trim() || 'Gasto del salón';
-        MOVEMENTS.unshift({tipo:'gasto', concepto:det, detalle:reg.cat, metodo:reg.methodG, monto, grupo:'hoy', fecha:'Hoy'});
+        MOVEMENTS.unshift({tipo:'gasto', concepto:det, detalle:reg.cat, metodo:reg.methodG, monto, grupo:'hoy', fecha:'Hoy', dk:HOY_KEY});
         $('#regDoneTitle').textContent = '¡Gasto registrado!';
         $('#regDoneText').textContent = `${det} · ${fmt(monto)} en ${reg.methodG.toLowerCase()}. Ya aparece en Finanzas.`;
       }
       $('#regForm').style.display='none'; $('#regDone').style.display='block';
       $('#regBar').style.display='none';
+      saveState();
       renderInicio(); renderFinanzas(); renderClientes($('#clientSearch').value.toLowerCase());
     });
 
@@ -1767,6 +1830,7 @@
       (APPOINTMENTS[cita.day] = APPOINTMENTS[cita.day] || []).push(appt);
       APPOINTMENTS[cita.day].sort((a,b)=> HOURS.indexOf(a.hora) - HOURS.indexOf(b.hora));
       c.next = `${opt.corto} · ${cita.hour}`;
+      saveState();
       lastCitaDay = opt.weekIdx >= 0 ? opt.weekIdx : TODAY_IDX;
       $('#citaDoneText').textContent = `${c.name} · ${opt.label.toLowerCase()} a las ${cita.hour}.`;
       $('#citaForm').style.display='none'; $('#citaDone').style.display='block';
